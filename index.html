@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Mythic Bastionland Page Extractor</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            background: #eef1f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            background: white;
+            padding: 2rem 2.5rem;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            width: 80vw;
+            height: 95vh;
+            display: flex;
+            flex-direction: column;
+            gap: 1.2rem;
+        }
+
+        .main {
+            position: relative;
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            width: 100%;
+            height: 100%;
+        }
+
+        .controls {
+            width: 35%;
+            height: 100%;
+        }
+
+        .display {
+            height: 100%;
+            max-height: 100%;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        #controls-section {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        h1 {
+            font-size: 3.5rem;
+            font-weight: 600;
+            margin: 0.5rem;
+            color: #333;
+            text-align: left;
+        }
+
+        label {
+            font-weight: 600;
+            color: #444;
+            margin-bottom: 0.2rem;
+            font-size: 0.95rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            margin: 0.5rem;
+        }
+
+        input[type="file"],
+        input[type="number"],
+        select {
+            padding: 0.6rem 0.8rem;
+            font-size: 1rem;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            background: #fdfdfd;
+            transition: border 0.2s;
+        }
+
+        input:focus,
+        select:focus {
+            border-color: #007bff;
+            outline: none;
+        }
+
+        #upload-section {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        button {
+            background-color: #007bff;
+        }
+
+        .action-button {
+            padding: 0.75rem;
+            margin: 0.5rem;
+            font-size: 1rem;
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        #download-link {
+            background-color: #28a745;
+            text-decoration: none;
+        }
+
+
+        #download-link:hover {
+            background-color: #218838;
+        }
+
+        canvas {
+            width: 100%;
+            height: auto;
+            display: block;
+            border-radius: 0.5rem;
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+        }
+
+        #controls-section,
+        #download-link {
+            transition: opacity 0.3s ease;
+        }
+    </style>
+
+
+</head>
+
+<body>
+    <div class="container">
+        <div class="main">
+            <div class="controls">
+                <h1>Mythic<br>
+                    Bastionland:<br>
+                    Sheets
+                </h1>
+                <div id="upload-section" class="form-group">
+                    <label for="pdf-upload">Select Your Mythic Bastionland PDF</label>
+                    <input type="file" id="pdf-upload" accept="application/pdf">
+                </div>
+
+                <div id="controls-section" style="display: none;">
+                    <div class="form-group">
+                        <label for="d6">D6 Roll (1–6):</label>
+                        <input type="number" id="d6" min="1" max="6">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="d12">D12 Roll (1–12):</label>
+                        <input type="number" id="d12" min="1" max="12">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="type">Type:</label>
+                        <select id="type">
+                            <option value="knight">Knight</option>
+                            <option value="myth">Myth</option>
+                        </select>
+                    </div>
+
+                    <div class="action-buttons">
+                        <button class="action-button" onclick="getPage()">Convert to PNG</button>
+                        <a id="download-link" class="action-button" style="display: none; text-decoration: none;"
+                            download="page.png">
+                            Download PNG
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="display">
+                <canvas id="pdf-canvas"></canvas>
+            </div>
+        </div>
+    </div>
+</body>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+    let pdfDoc = null;
+
+    document.getElementById('pdf-upload').addEventListener('change', function (e) {
+        const file = e.target.files[0];
+        if (file && file.type === 'application/pdf') {
+            const reader = new FileReader();
+            reader.onload = async function () {
+                const typedarray = new Uint8Array(this.result);
+                pdfDoc = await pdfjsLib.getDocument({ data: typedarray }).promise;
+                alert(`PDF loaded with ${pdfDoc.numPages} pages.`);
+
+                document.getElementById('upload-section').style.display = 'none';
+                document.getElementById('controls-section').style.display = 'flex';
+            };
+            reader.readAsArrayBuffer(file);
+        }
+    });
+
+    async function getPage() {
+        const d6 = parseInt(document.getElementById('d6').value);
+        const d12 = parseInt(document.getElementById('d12').value);
+        const type = document.getElementById('type').value;
+
+        if (!pdfDoc || isNaN(d6) || isNaN(d12) || d6 < 1 || d6 > 6 || d12 < 1 || d12 > 12) {
+            alert("Please upload a PDF and enter valid D6 and D12 values.");
+            return;
+        }
+
+        let pageNumber = 28 + ((d6 - 1) * 24) + ((d12 - 1) * 2);
+        if (type === "myth") pageNumber += 1;
+
+        if (pageNumber > pdfDoc.numPages) {
+            alert("Calculated page number exceeds document length.");
+            return;
+        }
+
+        const page = await pdfDoc.getPage(pageNumber);
+        const scale = 2;
+        const viewport = page.getViewport({ scale });
+
+        const canvas = document.getElementById('pdf-canvas');
+        const context = canvas.getContext('2d');
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+
+        await page.render({ canvasContext: context, viewport }).promise;
+
+        const pngData = canvas.toDataURL('image/png');
+        const downloadLink = document.getElementById('download-link');
+        downloadLink.href = pngData;
+
+        const filename = `${d6}_${d12}_${type}.png`;
+        downloadLink.download = filename;
+        downloadLink.style.display = 'inline';
+    }
+
+</script>
+</body>
+
+</html>
