@@ -91,6 +91,7 @@
             border: 1px solid #ccc;
             background: #fdfdfd;
             transition: border 0.2s;
+            width: 6rem
         }
 
         input:focus,
@@ -99,11 +100,12 @@
             outline: none;
         }
 
-        #upload-section {
+        #upload-section input {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
+            width: 25rem;
         }
 
         button {
@@ -170,7 +172,10 @@
                     Sheets
                 </h1>
                 <div id="upload-section" class="form-group">
-                    <label for="pdf-upload">Select Your Mythic Bastionland PDF</label>
+                    <label for="pdf-upload">
+                        Select Your Mythic Bastionland PDF<br>
+                        (this file is not transmitted or stored)
+                    </label>
                     <input type="file" id="pdf-upload" accept="application/pdf">
                 </div>
 
